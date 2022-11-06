@@ -6,6 +6,13 @@ This project is developed using spring boot framework with in-memory H2 database
 
 # Getting Started
 
+### Tools & Technologies
+* Java 8
+* Spring Boot 2.6.13
+* H2 In-Memory Database
+* Restful APIs
+* JUnit 5 
+
 ### API Documentation
 For further reference, please consider the following sections:
 
