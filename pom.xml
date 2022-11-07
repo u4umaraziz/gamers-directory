@@ -72,11 +72,6 @@
 			<artifactId>commons-collections4</artifactId>
 			<version>${apache-commons-collection4.version}</version>
 		</dependency>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<scope>test</scope>
-		</dependency>
 	</dependencies>
 
 	<build>
