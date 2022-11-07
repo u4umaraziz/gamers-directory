@@ -1,11 +1,13 @@
 package com.bestsellers.assignment.gamersdirectory;
 
+import com.bestsellers.assignment.gamersdirectory.entity.Player;
 import com.bestsellers.assignment.gamersdirectory.enums.GamerLevelEnum;
 import com.bestsellers.assignment.gamersdirectory.exception.NoGameFoundException;
 import com.bestsellers.assignment.gamersdirectory.exception.NoPlayerFoundException;
 import com.bestsellers.assignment.gamersdirectory.model.LinkGameRequestDTO;
 import com.bestsellers.assignment.gamersdirectory.service.GameService;
 import com.bestsellers.assignment.gamersdirectory.service.PlayerService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +20,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -36,13 +39,63 @@ public class GamersDirectoryApplicationTests {
 	@Autowired
 	private MockMvc mvc;
 
+	private static final String gameUuid = "a08210c2-c6a3-4b00-a0e1-9f84cdef24d1";
+	private static final String playerUuid = "e08210c2-c6a3-4b00-a0e1-9f84cdef24d0";
+
 	@Test
-	public void whenGetPlayers_thenReturnJsonArray() throws Exception {
+	public void whenGetPlayers_thenReturnGamerExists() throws Exception {
 
 		mvc.perform(get("/players").contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$", hasSize(9)))
 				.andExpect(jsonPath("$[0].name", is("Gamer1")));
+
+	}
+
+	@Test
+	public void registerPlayer_ThenReturnCreatedResponse() throws Exception
+	{
+		Player player = new Player().toBuilder()
+				.name("Umar")
+				.location("Pakistan")
+				.build();
+
+		mvc.perform(post("/register").content(asJsonString(player))
+				.contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isCreated());
+
+		mvc.perform(get("/players")
+				.contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$", hasSize(10)));
+	}
+
+	@Test
+	public void linkAlreadyLinkedPlayer_ThenThrowError() throws Exception
+	{
+		LinkGameRequestDTO linkGameRequestDTO = new LinkGameRequestDTO().toBuilder()
+				.gameId(gameUuid)
+				.playerId(playerUuid)
+				.level(GamerLevelEnum.INVINCIBLE)
+				.build();
+
+		mvc.perform(post("/link").content(asJsonString(linkGameRequestDTO))
+				.contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().is5xxServerError());
+
+	}
+
+	@Test
+	public void linkPlayer_ThenReturnSuccess() throws Exception
+	{
+		LinkGameRequestDTO linkGameRequestDTO = new LinkGameRequestDTO().toBuilder()
+				.gameId(gameUuid)
+				.playerId(playerUuid)
+				.level(GamerLevelEnum.INVINCIBLE)
+				.build();
+
+		mvc.perform(post("/link").content(asJsonString(linkGameRequestDTO))
+				.contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk());
 
 	}
 
@@ -59,5 +112,13 @@ public class GamersDirectoryApplicationTests {
 				.level(GamerLevelEnum.INVINCIBLE)
 				.build();
 		Assertions.assertThrows(NoPlayerFoundException.class, () -> playerService.linkGame(linkGameRequestDTO));
+	}
+
+	public static String asJsonString(final Object obj) {
+		try {
+			return new ObjectMapper().writeValueAsString(obj);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 }
